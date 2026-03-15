@@ -116,7 +116,10 @@ h1, h2, h3, h4 {
   font-weight: 500;
   font-size: 0.95rem;
   cursor: pointer;
+  background-color: transparent;
+  border: none;
   border-left: 3px solid transparent;
+  text-align: left;
   transition: var(--calc-transition);
 }
 
