@@ -18,7 +18,7 @@ function App() {
     <div className="app-container">
       <aside className="sidebar">
         <div className="logo-container">
-          <div className="logo-text" style={{ textTransform: 'none' }}>G-UI v2.1 (SECURE)</div>
+          <div className="logo-text" style={{ textTransform: 'none' }}>Gotenberg-UI</div>
         </div>
 
         <nav style={{ flex: 1, overflowY: 'auto' }}>

@@ -50,9 +50,9 @@ export default function PdfSecurity() {
         formData.append('ownerPassword', ownerPassword);
       }
       
-      // Note: Gotenberg 8 /encrypt endpoint focuses on passwords.
-      // Permissions are usually handled via PDF engine specific flags if needed,
-      // but the baseline /encrypt endpoint primarily takes passwords.
+      // Gotenberg 8 /encrypt endpoint focuses on passwords.
+      // Setting an ownerPassword effectively locks the PDF settings, 
+      // but specific granular flags are not exposed in the standard v8 API.
 
       const response = await fetch('/api/forms/pdfengines/encrypt', {
         method: 'POST',
@@ -126,7 +126,7 @@ export default function PdfSecurity() {
       <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         <div>
           <label className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
-            USER_PASSWORD (OPEN)
+            USER_PASSWORD (REQUIRED TO OPEN)
           </label>
           <input 
             type="password" 
@@ -134,12 +134,13 @@ export default function PdfSecurity() {
             value={userPassword}
             onChange={(e) => setUserPassword(e.target.value)}
             placeholder="ENCRYPT_FILE"
+            required
             style={{ width: '100%', padding: '0.8rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white' }}
           />
         </div>
         <div>
           <label className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
-            OWNER_PASSWORD (ADMIN)
+            OWNER_PASSWORD (OPTIONAL)
           </label>
           <input 
             type="password" 
@@ -152,39 +153,8 @@ export default function PdfSecurity() {
         </div>
       </div>
 
-      <div style={{ marginTop: '1.5rem' }}>
-        <h4 className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '1rem', textTransform: 'uppercase' }}>Permissions</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-          {Object.keys(permissions).map((key) => (
-            <label key={key} className="mono" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-              <div 
-                onClick={() => handleToggle(key)}
-                style={{ 
-                  width: '30px', 
-                  height: '16px', 
-                  backgroundColor: permissions[key] ? 'var(--accent-color)' : 'var(--surface-color)',
-                  border: '1px solid var(--border-color)',
-                  position: 'relative',
-                  transition: 'var(--calc-transition)',
-                  cursor: 'pointer'
-                }}
-              >
-                <div style={{ 
-                  position: 'absolute',
-                  top: '2px',
-                  left: permissions[key] ? '16px' : '2px',
-                  width: '10px',
-                  height: '10px',
-                  backgroundColor: permissions[key] ? 'var(--accent-text)' : 'var(--text-secondary)',
-                  transition: 'var(--calc-transition)'
-                }} />
-              </div>
-              <span style={{ color: permissions[key] ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                {key.replace('allow', '').toUpperCase()}
-              </span>
-            </label>
-          ))}
-        </div>
+      <div className="alert-box mono" style={{ marginTop: '1.5rem', fontSize: '0.75rem', opacity: 0.8 }}>
+        <strong style={{ color: 'var(--accent-color)' }}>NOTE:</strong> Gotenberg 8 focuses on password-based encryption via QPDF. Setting an **Owner Password** effectively restricts permission changes and document editing.
       </div>
 
       {error && (

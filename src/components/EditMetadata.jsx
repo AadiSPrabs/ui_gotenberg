@@ -4,6 +4,7 @@ import { appendHistory } from '../utils/HistoryUtils';
 export default function EditMetadata() {
   const [file, setFile] = useState(null);
   const [metadata, setMetadata] = useState('{\n  "Author": "GTNBG Engine",\n  "Title": "Processed Document"\n}');
+  const [inspectedMetadata, setInspectedMetadata] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
@@ -11,6 +12,7 @@ export default function EditMetadata() {
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
+      setInspectedMetadata(''); // Reset inspection on new file
     }
   };
 
@@ -34,8 +36,7 @@ export default function EditMetadata() {
 
       const data = await response.json();
       // Gotenberg v8 returns the metadata as a JSON object
-      // We stringify it for the textarea
-      setMetadata(JSON.stringify(data, null, 2));
+      setInspectedMetadata(JSON.stringify(data, null, 2));
     } catch (err) {
       console.error('Inspection error:', err);
       setError(`Inspection failed: ${err.message || 'Check connection to Gotenberg API.'}`);
@@ -131,43 +132,71 @@ export default function EditMetadata() {
         />
       </div>
 
-      <div style={{ marginTop: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-          <label className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            METADATA_JSON_STRUCTURE
-          </label>
-          <button 
-            type="button" 
-            onClick={handleInspect} 
-            disabled={!file || loading}
-            className="mono" 
+      <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: inspectedMetadata ? '1fr 1fr' : '1fr', gap: '1.5rem' }}>
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+            <label className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              EDIT_PAYLOAD
+            </label>
+            <button 
+              type="button" 
+              onClick={handleInspect} 
+              disabled={!file || loading}
+              className="mono" 
+              style={{ 
+                background: 'none', 
+                border: '1px solid var(--border-color)', 
+                color: 'var(--accent-color)', 
+                padding: '0.3rem 0.6rem', 
+                fontSize: '0.7rem',
+                cursor: 'pointer'
+              }}
+            >
+              [ {inspectedMetadata ? 'REFRESH_INSPECTION' : 'INSPECT_FILE'} ]
+            </button>
+          </div>
+          <textarea 
+            className="input-field mono" 
+            value={metadata}
+            onChange={(e) => setMetadata(e.target.value)}
+            rows="10"
             style={{ 
-              background: 'none', 
+              width: '100%', 
+              padding: '1rem', 
+              backgroundColor: 'rgba(0,0,0,0.3)', 
               border: '1px solid var(--border-color)', 
-              color: 'var(--accent-color)', 
-              padding: '0.3rem 0.6rem', 
-              fontSize: '0.7rem',
-              cursor: 'pointer'
+              color: 'var(--accent-color)',
+              resize: 'vertical',
+              fontSize: '0.85rem'
             }}
-          >
-            [ INSPECT_CURRENT ]
-          </button>
+          />
         </div>
-        <textarea 
-          className="input-field mono" 
-          value={metadata}
-          onChange={(e) => setMetadata(e.target.value)}
-          rows="8"
-          style={{ 
-            width: '100%', 
-            padding: '1rem', 
-            backgroundColor: 'rgba(0,0,0,0.3)', 
-            border: '1px solid var(--border-color)', 
-            color: 'var(--accent-color)',
-            resize: 'vertical',
-            fontSize: '0.85rem'
-          }}
-        />
+
+        {inspectedMetadata && (
+          <div>
+            <div style={{ marginBottom: '0.8rem' }}>
+              <label className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                CURRENT_METADATA (READ_ONLY)
+              </label>
+            </div>
+            <textarea 
+              className="input-field mono" 
+              value={inspectedMetadata}
+              readOnly
+              rows="10"
+              style={{ 
+                width: '100%', 
+                padding: '1rem', 
+                backgroundColor: 'rgba(255,255,255,0.02)', 
+                border: '1px solid var(--border-color)', 
+                color: 'var(--text-secondary)',
+                resize: 'vertical',
+                fontSize: '0.85rem',
+                cursor: 'default'
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {error && (
