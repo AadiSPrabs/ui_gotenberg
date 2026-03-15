@@ -8,7 +8,8 @@
     try_files {path} /index.html
 
     # Proxy /api requests to Gotenberg internally
-    handle_path /api/* {
+    handle /api/* {
+        uri strip_prefix /api
         reverse_proxy localhost:3000
     }
 }
