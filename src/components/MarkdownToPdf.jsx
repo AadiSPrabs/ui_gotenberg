@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 
-export default function OfficeToPdf() {
+export default function MarkdownToPdf() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,9 +21,9 @@ export default function OfficeToPdf() {
     
     try {
       const formData = new FormData();
-      formData.append('files', file);
+      formData.append('files', file, 'index.md');
 
-      const response = await fetch('/api/forms/libreoffice/convert', {
+      const response = await fetch('/api/forms/chromium/convert/markdown', {
         method: 'POST',
         body: formData,
       });
@@ -36,14 +36,13 @@ export default function OfficeToPdf() {
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = downloadUrl;
-      const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-      a.download = `${originalName}_gtbg.pdf`;
+      a.download = `${file.name.replace('.md', '').replace('.markdown', '')}_gtbg.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
       a.remove();
     } catch (err) {
-      setError(err.message || 'An error occurred. Check Gotenberg connection.');
+      setError(err.message || 'An unexpected error occurred during conversion.');
     } finally {
       setLoading(false);
     }
@@ -66,20 +65,20 @@ export default function OfficeToPdf() {
 
         <div>
           <h3 style={{ marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {file ? file.name : 'MOUNT OFFICE DOCUMENT'}
+            {file ? file.name : 'MOUNT MARKDOWN FILE'}
           </h3>
           {file ? (
-            <div className="file-size-mono">SIZE: {(file.size / 1024 / 1024).toFixed(2)} MB</div>
+            <div className="file-size-mono">SIZE: {(file.size / 1024).toFixed(2)} KB</div>
           ) : (
             <p className="mono" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-              [ DOCX / XLSX / PPTX / TXT ]
+              [ CLICK TO BROWSE OR DRAG ] // ACCEPTS .MD
             </p>
           )}
         </div>
         
         <input 
           type="file" 
-          accept=".docx,.doc,.xlsx,.xls,.pptx,.ppt,.rtf,.txt,.odt,.ods,.odp" 
+          accept=".md,.markdown" 
           ref={fileInputRef} 
           onChange={handleFileChange} 
           style={{ display: 'none' }} 

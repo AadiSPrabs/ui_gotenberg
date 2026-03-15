@@ -4,6 +4,10 @@ export default function UrlToPdf() {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [options, setOptions] = useState({
+    landscape: false,
+    printBackground: true
+  });
 
   const handleConvert = async (e) => {
     e.preventDefault();
@@ -15,6 +19,13 @@ export default function UrlToPdf() {
     try {
       const formData = new FormData();
       formData.append('url', url);
+      
+      if (options.landscape) {
+        formData.append('landscape', 'true');
+      }
+      if (!options.printBackground) {
+        formData.append('printBackground', 'false');
+      }
 
       const response = await fetch('/api/forms/chromium/convert/url', {
         method: 'POST',
@@ -30,7 +41,7 @@ export default function UrlToPdf() {
       const a = document.createElement('a');
       a.href = downloadUrl;
       const filenameStr = new URL(url).hostname.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      a.download = `${filenameStr || 'website'}_converted.pdf`;
+      a.download = `${filenameStr || 'website'}_gtbg.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
@@ -43,9 +54,9 @@ export default function UrlToPdf() {
   };
 
   return (
-    <form onSubmit={handleConvert} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <form onSubmit={handleConvert}>
       <div className="input-group">
-        <label className="input-label">Website URL</label>
+        <label className="input-label">Target URL</label>
         <input 
           type="url" 
           className="input-field" 
@@ -56,9 +67,31 @@ export default function UrlToPdf() {
         />
       </div>
 
+      <div style={{ display: 'flex', gap: '2rem', marginBottom: '2rem' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+          <input 
+            type="checkbox" 
+            checked={options.landscape} 
+            onChange={(e) => setOptions({...options, landscape: e.target.checked})}
+            style={{ width: '1.2rem', height: '1.2rem', accentColor: 'var(--accent-color)' }}
+          />
+          <span className="mono" style={{ fontSize: '0.9rem', textTransform: 'uppercase' }}>Landscape</span>
+        </label>
+        
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+          <input 
+            type="checkbox" 
+            checked={options.printBackground} 
+            onChange={(e) => setOptions({...options, printBackground: e.target.checked})}
+            style={{ width: '1.2rem', height: '1.2rem', accentColor: 'var(--accent-color)' }}
+          />
+          <span className="mono" style={{ fontSize: '0.9rem', textTransform: 'uppercase' }}>Background Graphics</span>
+        </label>
+      </div>
+
       {error && (
-        <div style={{ color: '#ff7b72', background: 'rgba(255, 123, 114, 0.1)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255, 123, 114, 0.2)' }}>
-          {error}
+        <div className="alert-box alert-error">
+          <strong style={{ display: 'block', marginBottom: '0.2rem' }}>ERR_FAIL:</strong> {error}
         </div>
       )}
 
@@ -66,30 +99,13 @@ export default function UrlToPdf() {
         type="submit" 
         className="btn-primary" 
         disabled={loading || !url}
-        style={{ width: '100%', marginTop: '1rem' }}
       >
         {loading ? (
-          <>
-            <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
-              <line x1="12" y1="2" x2="12" y2="6"></line>
-              <line x1="12" y1="18" x2="12" y2="22"></line>
-              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-              <line x1="2" y1="12" x2="6" y2="12"></line>
-              <line x1="18" y1="12" x2="22" y2="12"></line>
-              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
-            </svg>
-            Converting...
-          </>
+          <span className="loader-mono">PROCESSING...</span>
         ) : (
-          'Convert to PDF'
+          'GENERATE PDF'
         )}
       </button>
-
-      <style>{`
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-      `}</style>
     </form>
   );
 }

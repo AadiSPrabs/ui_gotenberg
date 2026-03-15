@@ -2,69 +2,81 @@ import { useState } from 'react';
 import './index.css';
 import UrlToPdf from './components/UrlToPdf';
 import HtmlToPdf from './components/HtmlToPdf';
+import MarkdownToPdf from './components/MarkdownToPdf';
 import OfficeToPdf from './components/OfficeToPdf';
+import MergePdfs from './components/MergePdfs';
 
 function App() {
   const [activeTab, setActiveTab] = useState('url2pdf');
 
   return (
     <div className="app-container">
-      <aside className="sidebar glass-panel" style={{ borderRadius: 0, borderTop: 0, borderBottom: 0, borderLeft: 0 }}>
-        <div>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
-            Gotenberg
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '4px' }}>
-            Document Conversion API
-          </p>
+      <aside className="sidebar">
+        <div className="logo-container">
+          <div className="logo-text">GTNBG</div>
+          <div className="logo-sub">Engine Interface</div>
         </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <nav>
+          <div className="nav-category">Web Input</div>
           <button 
-            className={`nav-btn ${activeTab === 'url2pdf' ? 'active' : ''}`}
+            className={`nav-item ${activeTab === 'url2pdf' ? 'active' : ''}`}
             onClick={() => setActiveTab('url2pdf')}
           >
             URL to PDF
           </button>
           <button 
-            className={`nav-btn ${activeTab === 'html2pdf' ? 'active' : ''}`}
+            className={`nav-item ${activeTab === 'html2pdf' ? 'active' : ''}`}
             onClick={() => setActiveTab('html2pdf')}
           >
             HTML to PDF
           </button>
           <button 
-            className={`nav-btn ${activeTab === 'office2pdf' ? 'active' : ''}`}
+            className={`nav-item ${activeTab === 'markdown2pdf' ? 'active' : ''}`}
+            onClick={() => setActiveTab('markdown2pdf')}
+          >
+            Markdown to PDF
+          </button>
+          
+          <div className="nav-category">Office Input</div>
+          <button 
+            className={`nav-item ${activeTab === 'office2pdf' ? 'active' : ''}`}
             onClick={() => setActiveTab('office2pdf')}
           >
-            Office to PDF
+            Document to PDF
+          </button>
+
+          <div className="nav-category">Utilities</div>
+          <button 
+            className={`nav-item ${activeTab === 'mergePdfs' ? 'active' : ''}`}
+            onClick={() => setActiveTab('mergePdfs')}
+          >
+            Merge PDFs
           </button>
         </nav>
       </aside>
-      
+
       <main className="main-content">
         <div className="content-wrapper">
-          <header style={{ marginBottom: '3rem' }}>
-            <h1 className="animate-fade-in" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
-              {activeTab === 'url2pdf' && 'Convert URL to PDF'}
-              {activeTab === 'html2pdf' && 'Convert HTML to PDF'}
-              {activeTab === 'office2pdf' && 'Convert Office File to PDF'}
+          <header className="animate-in">
+            <h1 className="section-title">
+              {activeTab === 'url2pdf' && 'URL -> PDF'}
+              {activeTab === 'html2pdf' && 'HTML -> PDF'}
+              {activeTab === 'markdown2pdf' && 'MARKDOWN -> PDF'}
+              {activeTab === 'office2pdf' && 'DOC -> PDF'}
+              {activeTab === 'mergePdfs' && 'FUSE MULTIPLE PDFS'}
             </h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }} className="animate-fade-in delay-100">
-              Generate pixel-perfect PDFs using the Gotenberg API engine.
+            <p className="section-desc">
+              Generate and manipulate pixel-perfect PDFs using the Gotenberg API engine.
             </p>
           </header>
 
-          <div className="glass-panel animate-fade-in delay-200" style={{ padding: '2.5rem' }}>
+          <div className="panel animate-in" style={{ animationDelay: '0.1s' }}>
             {activeTab === 'url2pdf' && <UrlToPdf />}
             {activeTab === 'html2pdf' && <HtmlToPdf />}
+            {activeTab === 'markdown2pdf' && <MarkdownToPdf />}
             {activeTab === 'office2pdf' && <OfficeToPdf />}
+            {activeTab === 'mergePdfs' && <MergePdfs />}
           </div>
         </div>
       </main>
