@@ -8,10 +8,53 @@ export default function OfficeToPdf() {
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
+  const ALLOWED_EXTENSIONS = ['.docx', '.doc', '.xlsx', '.xls', '.pptx', '.ppt', '.rtf', '.txt', '.odt', '.ods', '.odp'];
+
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFiles(Array.from(e.target.files));
+      const newFiles = Array.from(e.target.files);
+      const invalidFiles = newFiles.filter(file => {
+        const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        return !ALLOWED_EXTENSIONS.includes(ext);
+      });
+
+      if (invalidFiles.length > 0) {
+        setError(`UNSUPPORTED_FILETYPE: ${invalidFiles.map(f => f.name).join(', ')}`);
+        return;
+      }
+
+      setFiles(prev => [...prev, ...newFiles]);
+      setError('');
     }
+  };
+
+  const removeFile = (index) => {
+    setFiles(files.filter((_, i) => i !== index));
+    if (files.length <= 1) setError('');
+  };
+
+  const clearAll = () => {
+    setFiles([]);
+    setError('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const moveUp = (index) => {
+    if (index === 0) return;
+    const newFiles = [...files];
+    const item = newFiles[index];
+    newFiles[index] = newFiles[index - 1];
+    newFiles[index - 1] = item;
+    setFiles(newFiles);
+  };
+
+  const moveDown = (index) => {
+    if (index === files.length - 1) return;
+    const newFiles = [...files];
+    const item = newFiles[index];
+    newFiles[index] = newFiles[index + 1];
+    newFiles[index + 1] = item;
+    setFiles(newFiles);
   };
 
   const handleConvert = async (e) => {
@@ -23,9 +66,17 @@ export default function OfficeToPdf() {
     
     try {
       const formData = new FormData();
-      files.forEach(file => formData.append('files', file));
+      
+      // If merging, use numerical prefixing to enforce order
+      files.forEach((file, index) => {
+        if (files.length > 1 && merge) {
+          const prefix = (index + 1).toString().padStart(4, '0');
+          formData.append('files', file, `${prefix}_${file.name}`);
+        } else {
+          formData.append('files', file);
+        }
+      });
 
-      // Instruct Gotenberg to merge them only if requested and more than 1 file
       if (files.length > 1 && merge) {
         formData.append('merge', 'true');
       }
@@ -47,12 +98,12 @@ export default function OfficeToPdf() {
       const a = document.createElement('a');
       a.href = downloadUrl;
       
-      const originalName = files[0].name.substring(0, files[0].name.lastIndexOf('.')) || files[0].name;
+      const firstFileName = files[0].name.substring(0, files[0].name.lastIndexOf('.')) || files[0].name;
       
       if (isZip) {
         a.download = `converted_${files.length}_docs.zip`;
       } else {
-        a.download = files.length > 1 && merge ? `merged_${files.length}_office_docs.pdf` : `${originalName}_gtbg.pdf`;
+        a.download = files.length > 1 && merge ? `merged_${files.length}_docs.pdf` : `${firstFileName}.pdf`;
       }
       
       document.body.appendChild(a);
@@ -60,15 +111,14 @@ export default function OfficeToPdf() {
       window.URL.revokeObjectURL(downloadUrl);
       a.remove();
 
-      // Log to history
       appendHistory({
         id: Date.now(),
-        filename: files.length > 1 ? `${files.length} OFFICE DOCUMENTS (${merge ? 'MERGED' : 'SEPARATE'})` : files[0].name,
+        filename: files.length > 1 ? `${files.length} DOCUMENTS (${merge ? 'MERGED' : 'SEPARATE'})` : files[0].name,
         type: 'OFFICE_TO_PDF',
         timestamp: new Date().toISOString()
       });
     } catch (err) {
-      setError(err.message || 'An error occurred. Check Gotenberg connection.');
+      setError(err.message || 'An error occurred during conversion.');
     } finally {
       setLoading(false);
     }
@@ -93,17 +143,9 @@ export default function OfficeToPdf() {
           <h3 style={{ marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {files.length > 0 ? `${files.length} DOCUMENT(S) MOUNTED` : 'MOUNT OFFICE DOCUMENT(S)'}
           </h3>
-          {files.length > 0 ? (
-            <div className="file-size-mono" style={{ marginTop: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', maxHeight: '100px', overflowY: 'auto' }}>
-              {files.map((file, idx) => (
-                <div key={idx} style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                  [{idx + 1}] {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                </div>
-              ))}
-            </div>
-          ) : (
+          {files.length === 0 && (
             <p className="mono" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-              [ DOCX / XLSX / PPTX / TXT ] // SELECT MULTIPLE TO AUTO-MERGE
+              [ CLICK TO BROWSE OR DRAG ] // MULTIPLE FILES SUPPORTED
             </p>
           )}
         </div>
@@ -111,40 +153,85 @@ export default function OfficeToPdf() {
         <input 
           type="file" 
           multiple
-          accept=".docx,.doc,.xlsx,.xls,.pptx,.ppt,.rtf,.txt,.odt,.ods,.odp" 
+          accept={ALLOWED_EXTENSIONS.join(',')} 
           ref={fileInputRef} 
           onChange={handleFileChange} 
           style={{ display: 'none' }} 
         />
       </div>
 
-      <div style={{ padding: '0 0.5rem', marginBottom: '1.5rem' }}>
-        <label className="mono" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-          <div 
-            onClick={() => setMerge(!merge)}
-            style={{ 
-              width: '40px', 
-              height: '20px', 
-              backgroundColor: merge ? 'var(--accent-color)' : 'var(--surface-color)',
-              border: '1px solid var(--border-color)',
-              position: 'relative',
-              transition: 'var(--calc-transition)'
-            }}
-          >
-            <div style={{ 
-              position: 'absolute',
-              top: '2px',
-              left: merge ? '22px' : '2px',
-              width: '14px',
-              height: '14px',
-              backgroundColor: merge ? 'var(--accent-text)' : 'var(--text-secondary)',
-              transition: 'var(--calc-transition)'
-            }} />
+      {files.length > 0 && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+             <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>FILE_QUEUE — ({files.length} ITEMS)</span>
+             <button type="button" onClick={clearAll} className="mono" style={{ background: 'none', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', fontSize: '0.7rem' }}>[ CLEAR_ALL ]</button>
           </div>
-          <span style={{ color: merge ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-            MERGE_DOCUMENTS: {merge ? 'ENABLED' : 'DISABLED (ZIP OUTPUT)'}
-          </span>
-        </label>
+          <div style={{ border: '1px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+            {files.map((file, idx) => (
+              <div key={idx} style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                padding: '0.8rem', 
+                gap: '1rem',
+                borderBottom: idx === files.length - 1 ? 'none' : '1px solid var(--border-color)'
+              }}>
+                <span className="mono" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{idx + 1}.</span>
+                <span className="mono" style={{ flex: 1, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="button" onClick={() => moveUp(idx)} disabled={idx === 0} style={{ background: 'none', border: '1px solid var(--border-color)', color: 'white', cursor: 'pointer', padding: '0.2rem 0.5rem' }}>↑</button>
+                  <button type="button" onClick={() => moveDown(idx)} disabled={idx === files.length - 1} style={{ background: 'none', border: '1px solid var(--border-color)', color: 'white', cursor: 'pointer', padding: '0.2rem 0.5rem' }}>↓</button>
+                  <button type="button" onClick={() => removeFile(idx)} style={{ background: 'none', border: '1px solid var(--border-color)', color: 'var(--accent-color)', cursor: 'pointer', padding: '0.2rem 0.5rem' }}>X</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {files.length > 1 && (
+        <div style={{ padding: '0 0.5rem', marginBottom: '1.5rem' }}>
+          <label className="mono" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+            <div 
+              onClick={() => setMerge(!merge)}
+              style={{ 
+                width: '40px', 
+                height: '20px', 
+                backgroundColor: merge ? 'var(--accent-color)' : 'var(--surface-color)',
+                border: '1px solid var(--border-color)',
+                position: 'relative',
+                transition: 'var(--calc-transition)',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ 
+                position: 'absolute',
+                top: '2px',
+                left: merge ? '22px' : '2px',
+                width: '14px',
+                height: '14px',
+                backgroundColor: merge ? 'var(--accent-text)' : 'var(--text-secondary)',
+                transition: 'var(--calc-transition)'
+              }} />
+            </div>
+            <span style={{ color: merge ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+              MERGE_DOCUMENTS: {merge ? 'ENABLED' : 'DISABLED (ZIP OUTPUT)'}
+            </span>
+          </label>
+        </div>
+      )}
+
+      <div style={{ marginBottom: '1.5rem', border: '1px solid var(--border-color)', padding: '1rem', backgroundColor: 'rgba(255,255,255,0.01)' }}>
+        <h4 className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.8rem', textTransform: 'uppercase' }}>Supported Formats</h4>
+        <div className="file-size-mono" style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', 
+          gap: '0.5rem',
+          fontSize: '0.75rem'
+        }}>
+          {ALLOWED_EXTENSIONS.map(ext => (
+            <div key={ext} style={{ color: 'var(--text-primary)' }}>{ext.toUpperCase()}</div>
+          ))}
+        </div>
       </div>
 
       {error && (

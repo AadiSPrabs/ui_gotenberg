@@ -5,6 +5,8 @@ services:
       - "3000:3000"
 
   gotenberg-ui:
+    # To use the pre-built image (standalone compose), replace 'build: .' with:
+    # image: ghcr.io/aadisprabs/gotenberg-ui:latest
     build: .
     ports:
       - "8080:8080"
