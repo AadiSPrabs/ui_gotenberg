@@ -93,11 +93,6 @@ export default function FlattenPdf() {
         />
       </div>
 
-      <p className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '1.5rem', lineHeight: '1.6' }}>
-        &gt; ACTION: CONVERT INTERACTIVE FORM FIELDS TO STATIC CONTENT. <br/>
-        &gt; RESULT: PREVENTS FURTHER EDITING OF FORM DATA.
-      </p>
-
       {error && (
         <div className="alert-box alert-error" style={{ marginTop: '1rem' }}>
           <strong style={{ display: 'block', marginBottom: '0.2rem' }}>ERR_FAIL:</strong> {error}

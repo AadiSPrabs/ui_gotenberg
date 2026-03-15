@@ -24,7 +24,7 @@ export default function SplitPdf() {
     try {
       const formData = new FormData();
       formData.append('files', file);
-      formData.append('span', span);
+      formData.append('spans', span); // API parameter is 'spans'
 
       const response = await fetch('/api/forms/pdfengines/split', {
         method: 'POST',
@@ -35,15 +35,21 @@ export default function SplitPdf() {
         throw new Error(`Split failed: ${response.statusText}`);
       }
 
+      const contentType = response.headers.get('content-type');
+      const isZip = contentType && contentType.includes('application/zip');
+      
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = downloadUrl;
       
       const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-      // Gotenberg split returns a zip if multiple spans, but we only send one span here.
-      // So it returns a PDF.
-      a.download = `${originalName}_split_${span}.pdf`;
+      
+      if (isZip) {
+        a.download = `${originalName}_split_results.zip`;
+      } else {
+        a.download = `${originalName}_split_${span.replace(/,/g, '_')}.pdf`;
+      }
       
       document.body.appendChild(a);
       a.click();
