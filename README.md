@@ -1,60 +1,72 @@
-# Gotenberg UI
+# Gotenberg UI v2.1 (Industrial Edition)
 
-A beautiful, self-hosted web UI frontend for the powerful [Gotenberg](https://gotenberg.dev/) document conversion API.
+A professional, self-hosted web UI frontend for the powerful [Gotenberg](https://gotenberg.dev/) document conversion API.
 
-This project uses an **"All-in-One" Docker Image** approach. It bundles the official Gotenberg Debian image, a lightweight Caddy web server, and a premium dark-glassmorphism React SPA all into a single container.
-
-## Features
-- **URL to PDF**: Convert any live website into a PDF.
-- **HTML to PDF**: Upload `.html` files for conversion.
-- **Office to PDF**: Upload Word, Excel, PowerPoint, and Text files.
-- Completely self-contained: no complex proxy setups or CORS issues needed.
+This project focuses on a **Brutalist / Industrial design** aesthetic, providing a stark, high-performance interface for complex PDF manipulation tasks. It is fully aligned with **Gotenberg 8**.
 
 ---
 
-## 🚀 How to Deploy on your Server
+## 🛠️ Features
 
-To get this running on your target server machine (Linux/Windows/macOS) with Docker installed, follow these exact steps:
+### **Web & Office Conversion**
+- **URL to PDF**: Render remote web pages using Chromium.
+- **HTML to PDF**: Convert multi-file HTML assets with full CSS support.
+- **Markdown to PDF**: Professional document generation from Markdown.
+- **Office to PDF**: Convert Word, Excel, PowerPoint, and Text files (LibreOffice powered).
+  - *New:* Supports **Merging** multiple office files into a single PDF during conversion.
 
-### 1. Download the Codebase
-SSH into your server and download the latest zip archive:
-```bash
-# Using wget
-wget https://github.com/AadiSPrabs/ui_gotenberg/archive/refs/heads/main.zip
-unzip main.zip
-cd ui_gotenberg-main
-```
-*(If you don't have `wget`, you can use `curl -L -O https://github.com/AadiSPrabs/ui_gotenberg/archive/refs/heads/main.zip`)*
+### **Advanced PDF Utilities**
+- **Merge PDFs**: Consolidated multiple PDF sources with forced reordering.
+- **Split PDF**: Extract specific page ranges or individual sheets.
+- **Convert to PDF/A**: Enforce archival standards for long-term storage.
+- **Edit Metadata**: Side-by-side inspection and modification of document properties.
+- **PDF Security**: Encrypt documents with User/Owner passwords via QPDF.
+- **Flatten PDF**: Make interactive form fields and annotations static.
 
-### 2. Build the All-in-One Docker Image
-Because this image compiles the React frontend inside a builder stage and then packages it with Gotenberg, building it takes a few moments. Run:
-```bash
-docker build -t gotenberg-ui .
-```
-
-### 3. Run the Container
-Once the image is built, you can spin it up mapping port `8080` (or any port of your choice) to the container.
-
-**Basic Run:**
-```bash
-docker run --rm -p 8080:8080 gotenberg-ui
-```
-
-**Run in the Background (Detached):**
-```bash
-docker run -d --name gotenberg-ui --restart unless-stopped -p 8080:8080 gotenberg-ui
-```
-
-### 4. Access the UI
-Open your web browser and navigate to:
-```
-http://<YOUR_SERVER_IP>:8080
-```
-You will be greeted by the premium Gotenberg UI!
+### **UI & Experience**
+- **Mobile Responsive**: Refined layout for phones and tablets with a mobile sidebar menu.
+- **Operation History**: Local log of recent operations stored securely in `localStorage`.
+- **Industrial Design**: High-contrast, utilitarian interface using the `Outfit` and `JetBrains Mono` typefaces.
+- **No Dependencies**: All logic is bundled into a single Docker-compose stack.
 
 ---
 
-## Technical Architecture
-- **Frontend**: Vite + React, Vanilla CSS
-- **Proxy/Routing**: Caddy v2 (internal `8080` -> internal `3000`)
-- **Backend API**: The official `gotenberg/gotenberg:8` Docker engine.
+## 🚀 Deployment
+
+### **Quick Start (Docker Compose)**
+The recommended way to deploy is using the provided `docker-compose.yml`. This handles the frontend, the Gotenberg engine, and the reverse proxy automatically.
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/AadiSPrabs/ui_gotenberg.git
+   cd ui_gotenberg
+   ```
+
+2. **Launch the stack:**
+   ```bash
+   docker compose up --build -d
+   ```
+
+3. **Access the UI:**
+   Navigate to `http://localhost:8080` (or your server's IP).
+
+### **Environment Variables**
+You can configure the Gotenberg endpoint in the `docker-compose.yml` if you are running the engine on a different machine:
+- `GOTENBERG_URL`: Default is `http://gotenberg:3000`
+
+---
+
+## 🏗️ Technical Architecture
+- **Frontend**: Vite + React, Vanilla CSS (Industrial theme)
+- **Engine**: [Gotenberg 8](https://github.com/gotenberg/gotenberg) (Chromium, LibreOffice, PDFtk, QPDF)
+- **Reverse Proxy**: Caddy v2
+- **Connectivity**: Local proxying via `vite.config.js` and `Caddyfile` to avoid CORS issues.
+
+---
+
+## 🛡️ Security Note
+Standard encryption is handled via the `/encrypt` endpoint (Power by QPDF). Setting an **Owner Password** restricts document modifications and permission changes.
+
+---
+
+*Built with precision for the open-source community.*
