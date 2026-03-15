@@ -1,4 +1,4 @@
-:8080 {
+http://:8080 {
     # 1. API route (Must be matched first)
     handle /api/* {
         uri strip_prefix /api
