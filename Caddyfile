@@ -1,19 +1,22 @@
 :8080 {
-    # Serve static files from the Vite build output
-    root * /srv
-    encode gzip
-    file_server
-
-    # Handle SPA routing
-    try_files {path} /index.html
-
-    # Proxy /api requests to Gotenberg internally
+    # 1. API route (Must be matched first)
     handle /api/* {
         uri strip_prefix /api
         reverse_proxy localhost:3000 {
             header_up Host {host}
             header_up X-Real-IP {remote}
             header_up X-Forwarded-For {remote}
+            
+            # Disable buffering for large document uploads
+            flush_interval -1
         }
+    }
+
+    # 2. Static UI Files
+    handle {
+        root * /srv
+        encode gzip
+        try_files {path} /index.html
+        file_server
     }
 }
