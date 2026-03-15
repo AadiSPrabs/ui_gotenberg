@@ -3,6 +3,7 @@ import { appendHistory } from '../utils/HistoryUtils';
 
 export default function OfficeToPdf() {
   const [files, setFiles] = useState([]);
+  const [merge, setMerge] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
@@ -24,8 +25,8 @@ export default function OfficeToPdf() {
       const formData = new FormData();
       files.forEach(file => formData.append('files', file));
 
-      // Instruct Gotenberg to merge them if more than 1 file is passed
-      if (files.length > 1) {
+      // Instruct Gotenberg to merge them only if requested and more than 1 file
+      if (files.length > 1 && merge) {
         formData.append('merge', 'true');
       }
 
@@ -38,13 +39,21 @@ export default function OfficeToPdf() {
         throw new Error(`Conversion failed: ${response.statusText}`);
       }
 
+      const contentType = response.headers.get('content-type');
+      const isZip = contentType && contentType.includes('application/zip');
+      
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = downloadUrl;
       
       const originalName = files[0].name.substring(0, files[0].name.lastIndexOf('.')) || files[0].name;
-      a.download = files.length > 1 ? `merged_${files.length}_office_docs.pdf` : `${originalName}_gtbg.pdf`;
+      
+      if (isZip) {
+        a.download = `converted_${files.length}_docs.zip`;
+      } else {
+        a.download = files.length > 1 && merge ? `merged_${files.length}_office_docs.pdf` : `${originalName}_gtbg.pdf`;
+      }
       
       document.body.appendChild(a);
       a.click();
@@ -54,7 +63,7 @@ export default function OfficeToPdf() {
       // Log to history
       appendHistory({
         id: Date.now(),
-        filename: files.length > 1 ? `${files.length} OFFICE DOCUMENTS` : files[0].name,
+        filename: files.length > 1 ? `${files.length} OFFICE DOCUMENTS (${merge ? 'MERGED' : 'SEPARATE'})` : files[0].name,
         type: 'OFFICE_TO_PDF',
         timestamp: new Date().toISOString()
       });
@@ -107,6 +116,35 @@ export default function OfficeToPdf() {
           onChange={handleFileChange} 
           style={{ display: 'none' }} 
         />
+      </div>
+
+      <div style={{ padding: '0 0.5rem', marginBottom: '1.5rem' }}>
+        <label className="mono" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+          <div 
+            onClick={() => setMerge(!merge)}
+            style={{ 
+              width: '40px', 
+              height: '20px', 
+              backgroundColor: merge ? 'var(--accent-color)' : 'var(--surface-color)',
+              border: '1px solid var(--border-color)',
+              position: 'relative',
+              transition: 'var(--calc-transition)'
+            }}
+          >
+            <div style={{ 
+              position: 'absolute',
+              top: '2px',
+              left: merge ? '22px' : '2px',
+              width: '14px',
+              height: '14px',
+              backgroundColor: merge ? 'var(--accent-text)' : 'var(--text-secondary)',
+              transition: 'var(--calc-transition)'
+            }} />
+          </div>
+          <span style={{ color: merge ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+            MERGE_DOCUMENTS: {merge ? 'ENABLED' : 'DISABLED (ZIP OUTPUT)'}
+          </span>
+        </label>
       </div>
 
       {error && (
