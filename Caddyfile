@@ -1,14 +1,4 @@
-{
-    # Bind to both 80 and 443
-    http_port 80
-    https_port 443
-}
-
-# HTTP and HTTPS server
-:80, :443 {
-    # Self-signed certs for local IP/domain if no domain is provided
-    tls internal
-
+:80 {
     # 1. API route (Must be matched first)
     handle /api/* {
         uri strip_prefix /api
