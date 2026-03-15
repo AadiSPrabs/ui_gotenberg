@@ -371,15 +371,36 @@ h1, h2, h3, h4 {
   color: oklch(80% 0.1 25);
 }
 
-/* Loaders */
-.loader-mono {
-  font-family: 'JetBrains Mono', monospace;
-  animation: blink 1s infinite;
+/* Mobile Navigation Components */
+.mobile-header {
+  display: none;
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--bg-color);
+  border-bottom: var(--border-width) var(--border-style) var(--border-color);
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+.mobile-menu-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--accent-color);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  z-index: 15;
 }
 
 /* Animations */
@@ -390,4 +411,61 @@ h1, h2, h3, h4 {
 
 .animate-in {
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  .mobile-header {
+    display: flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    width: 280px;
+    transition: var(--calc-transition);
+    z-index: 21;
+    border-top: 5px solid var(--accent-color);
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+
+  .main-content {
+    padding: var(--spacing-md);
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+  }
+
+  .panel {
+    padding: var(--spacing-md);
+  }
+
+  /* Force stack grids */
+  .edit-metadata-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Adjust EditMetadata side-by-side specific style */
+  div[style*="grid-template-columns: 1fr 1fr"],
+  div[style*="gridTemplateColumns: inspectedMetadata ? '1fr 1fr' : '1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Fix security grid */
+  div[style*="gridTemplateColumns: '1fr 1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
 }

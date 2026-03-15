@@ -9,25 +9,11 @@ export default function PdfSecurity() {
 
   const [userPassword, setUserPassword] = useState('');
   const [ownerPassword, setOwnerPassword] = useState('');
-  const [permissions, setPermissions] = useState({
-    allowPrinting: true,
-    allowModifyContents: true,
-    allowCopy: true,
-    allowModifyAnnotations: true,
-    allowFillForms: true,
-    allowScreenReaders: true,
-    allowAssembly: true,
-    allowDegradedPrinting: true,
-  });
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
     }
-  };
-
-  const handleToggle = (key) => {
-    setPermissions(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleProtect = async (e) => {
@@ -123,7 +109,7 @@ export default function PdfSecurity() {
         />
       </div>
 
-      <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1rem' }}>
         <div>
           <label className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
             USER_PASSWORD (REQUIRED TO OPEN)
@@ -151,10 +137,6 @@ export default function PdfSecurity() {
             style={{ width: '100%', padding: '0.8rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white' }}
           />
         </div>
-      </div>
-
-      <div className="alert-box mono" style={{ marginTop: '1.5rem', fontSize: '0.75rem', opacity: 0.8 }}>
-        <strong style={{ color: 'var(--accent-color)' }}>NOTE:</strong> Gotenberg 8 focuses on password-based encryption via QPDF. Setting an **Owner Password** effectively restricts permission changes and document editing.
       </div>
 
       {error && (

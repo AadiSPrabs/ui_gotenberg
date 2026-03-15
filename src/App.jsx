@@ -13,10 +13,30 @@ import PdfSecurity from './components/PdfSecurity';
 
 function App() {
   const [activeTab, setActiveTab] = useState('url2pdf');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
+  const handleNavClick = (tab) => {
+    setActiveTab(tab);
+    closeSidebar();
+  };
 
   return (
-    <div className="app-container">
-      <aside className="sidebar">
+    <div className={`app-container ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      {/* Mobile Top Bar */}
+      <div className="mobile-header">
+        <div className="logo-text" style={{ fontSize: '1rem' }}>Gotenberg-UI</div>
+        <button className="mobile-menu-btn mono" onClick={toggleSidebar}>
+          {isSidebarOpen ? '[ CLOSE ]' : '[ MENU ]'}
+        </button>
+      </div>
+
+      {/* Sidebar Overlay */}
+      {isSidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
+
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="logo-container">
           <div className="logo-text" style={{ textTransform: 'none' }}>Gotenberg-UI</div>
         </div>
@@ -25,19 +45,19 @@ function App() {
           <div className="nav-category">Web Input</div>
           <button 
             className={`nav-item ${activeTab === 'url2pdf' ? 'active' : ''}`}
-            onClick={() => setActiveTab('url2pdf')}
+            onClick={() => handleNavClick('url2pdf')}
           >
             URL to PDF
           </button>
           <button 
             className={`nav-item ${activeTab === 'html2pdf' ? 'active' : ''}`}
-            onClick={() => setActiveTab('html2pdf')}
+            onClick={() => handleNavClick('html2pdf')}
           >
             HTML to PDF
           </button>
           <button 
             className={`nav-item ${activeTab === 'markdown2pdf' ? 'active' : ''}`}
-            onClick={() => setActiveTab('markdown2pdf')}
+            onClick={() => handleNavClick('markdown2pdf')}
           >
             Markdown to PDF
           </button>
@@ -45,7 +65,7 @@ function App() {
           <div className="nav-category">Office Input</div>
           <button 
             className={`nav-item ${activeTab === 'office2pdf' ? 'active' : ''}`}
-            onClick={() => setActiveTab('office2pdf')}
+            onClick={() => handleNavClick('office2pdf')}
           >
             Document to PDF
           </button>
@@ -53,46 +73,44 @@ function App() {
           <div className="nav-category">Utilities</div>
           <button 
             className={`nav-item ${activeTab === 'mergePdfs' ? 'active' : ''}`}
-            onClick={() => setActiveTab('mergePdfs')}
+            onClick={() => handleNavClick('mergePdfs')}
           >
             Merge PDFs
           </button>
           
           <button 
             className={`nav-item ${activeTab === 'splitPdf' ? 'active' : ''}`}
-            onClick={() => setActiveTab('splitPdf')}
+            onClick={() => handleNavClick('splitPdf')}
           >
             Split PDF
           </button>
           <button 
             className={`nav-item ${activeTab === 'pdfA' ? 'active' : ''}`}
-            onClick={() => setActiveTab('pdfA')}
+            onClick={() => handleNavClick('pdfA')}
           >
             Convert to PDF/A
           </button>
           <button 
             className={`nav-item ${activeTab === 'metadata' ? 'active' : ''}`}
-            onClick={() => setActiveTab('metadata')}
+            onClick={() => handleNavClick('metadata')}
           >
             Edit Metadata
           </button>
           <button 
             className={`nav-item ${activeTab === 'security' ? 'active' : ''}`}
-            onClick={() => setActiveTab('security')}
+            onClick={() => handleNavClick('security')}
           >
             PDF Security
           </button>
           <button 
             className={`nav-item ${activeTab === 'flatten' ? 'active' : ''}`}
-            onClick={() => setActiveTab('flatten')}
+            onClick={() => handleNavClick('flatten')}
           >
             Flatten PDF
           </button>
-
-          <div className="nav-category">System</div>
           <button 
             className={`nav-item ${activeTab === 'history' ? 'active' : ''}`}
-            onClick={() => setActiveTab('history')}
+            onClick={() => handleNavClick('history')}
           >
             History Log
           </button>
