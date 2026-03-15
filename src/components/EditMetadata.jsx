@@ -36,7 +36,8 @@ export default function EditMetadata() {
       // Gotenberg v8 returns the metadata as a JSON object
       setMetadata(JSON.stringify(data, null, 2));
     } catch (err) {
-      setError(err.message || 'Failed to inspect metadata.');
+      console.error('Inspection error:', err);
+      setError(`Inspection failed: ${err.message || 'Check connection to Gotenberg API.'}`);
     } finally {
       setLoading(false);
     }

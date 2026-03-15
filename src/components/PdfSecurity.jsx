@@ -82,7 +82,8 @@ export default function PdfSecurity() {
         timestamp: new Date().toISOString()
       });
     } catch (err) {
-      setError(err.message || 'An error occurred during security setup.');
+      console.error('Security error:', err);
+      setError(`Protection failed: ${err.message || 'Check connection to Gotenberg API.'}`);
     } finally {
       setLoading(false);
     }

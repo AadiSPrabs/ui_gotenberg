@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: env.VITE_GOTENBERG_URL || 'http://localhost:3000',
+          target: env.VITE_GOTENBERG_URL || 'http://127.0.0.1:3000',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, '')
         }
