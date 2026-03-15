@@ -10,6 +10,7 @@ import SplitPdf from './components/SplitPdf';
 import ConvertToPdfA from './components/ConvertToPdfA';
 import EditMetadata from './components/EditMetadata';
 import PdfSecurity from './components/PdfSecurity';
+import FlattenPdf from './components/FlattenPdf';
 
 function App() {
   const [activeTab, setActiveTab] = useState('url2pdf');
