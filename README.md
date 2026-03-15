@@ -30,20 +30,33 @@ A clean, self-hosted web UI frontend for the powerful [Gotenberg](https://gotenb
 
 ## 🚀 Deployment
 
-### **Quick Start (Docker Compose)**
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/AadiSPrabs/ui_gotenberg.git
-   cd ui_gotenberg
-   ```
+### **Quick Start**
+The easiest way to get started is to use Docker Compose. Create a `docker-compose.yml` file with the following content:
 
-2. **Launch the stack:**
-   ```bash
-   docker compose up --build -d
-   ```
+```yaml
+services:
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    ports:
+      - "3000:3000"
 
-3. **Access the UI:**
-   Navigate to `http://localhost:8080` (or your server's IP).
+  gotenberg-ui:
+    image: ghcr.io/aadisprabs/ui_gotenberg:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - GOTENBERG_URL=http://gotenberg:3000
+    depends_on:
+      - gotenberg
+```
+
+Then, run:
+
+```bash
+docker compose up -d
+```
+
+Access the UI at `http://localhost:8080`.
 
 ---
 
