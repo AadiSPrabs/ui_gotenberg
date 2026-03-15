@@ -134,6 +134,28 @@ h1, h2, h3, h4 {
   color: var(--accent-color);
 }
 
+/* Sidebar Custom Scrollbar */
+.sidebar nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar nav::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+.sidebar nav::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+}
+
+.sidebar nav::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.sidebar nav {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) var(--bg-color);
+}
+
 /* Segmented Control / Button Groups in Panels */
 .segmented-control {
   display: flex;
