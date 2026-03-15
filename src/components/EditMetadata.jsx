@@ -14,6 +14,34 @@ export default function EditMetadata() {
     }
   };
 
+  const handleInspect = async () => {
+    if (!file) return;
+    setLoading(true);
+    setError('');
+    
+    try {
+      const formData = new FormData();
+      formData.append('files', file);
+
+      const response = await fetch('/api/forms/pdfengines/metadata', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Inspection failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      // Gotenberg v8 returns the metadata as a JSON object
+      setMetadata(JSON.stringify(data, null, 2));
+    } catch (err) {
+      setError(err.message || 'Failed to inspect metadata.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (!file) return;
@@ -25,7 +53,10 @@ export default function EditMetadata() {
       const metadataObj = JSON.parse(metadata);
       const formData = new FormData();
       formData.append('files', file);
-      formData.append('metadata', JSON.stringify(metadataObj));
+      
+      // Gotenberg v8 expects a "metadata.json" file for updates
+      const metadataBlob = new Blob([JSON.stringify(metadataObj)], { type: 'application/json' });
+      formData.append('files', metadataBlob, 'metadata.json');
 
       const response = await fetch('/api/forms/pdfengines/metadata', {
         method: 'POST',
@@ -42,7 +73,7 @@ export default function EditMetadata() {
       a.href = downloadUrl;
       
       const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-      a.download = `${originalName}_meta_gtbg.pdf`;
+      a.download = `${originalName}_meta.pdf`;
       
       document.body.appendChild(a);
       a.click();
@@ -52,11 +83,11 @@ export default function EditMetadata() {
       appendHistory({
         id: Date.now(),
         filename: file.name,
-        type: 'METADATA_EDIT',
+        type: 'METADATA_UPDATE',
         timestamp: new Date().toISOString()
       });
     } catch (err) {
-      setError(err.message || 'An error occurred during metadata update. Ensure JSON is valid.');
+      setError(err.message || 'An error occurred. Ensure JSON is valid.');
     } finally {
       setLoading(false);
     }
@@ -98,14 +129,32 @@ export default function EditMetadata() {
       </div>
 
       <div style={{ marginTop: '1.5rem' }}>
-        <label className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
-          METADATA_JSON_STRING
-        </label>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+          <label className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            METADATA_JSON_STRUCTURE
+          </label>
+          <button 
+            type="button" 
+            onClick={handleInspect} 
+            disabled={!file || loading}
+            className="mono" 
+            style={{ 
+              background: 'none', 
+              border: '1px solid var(--border-color)', 
+              color: 'var(--accent-color)', 
+              padding: '0.3rem 0.6rem', 
+              fontSize: '0.7rem',
+              cursor: 'pointer'
+            }}
+          >
+            [ INSPECT_CURRENT ]
+          </button>
+        </div>
         <textarea 
           className="input-field mono" 
           value={metadata}
           onChange={(e) => setMetadata(e.target.value)}
-          rows="5"
+          rows="8"
           style={{ 
             width: '100%', 
             padding: '1rem', 
@@ -131,7 +180,7 @@ export default function EditMetadata() {
         style={{ marginTop: '1.5rem' }}
       >
         {loading ? (
-          <span className="loader-mono">INJECTING...</span>
+          <span className="loader-mono">PROCESSING...</span>
         ) : (
           'UPDATE METADATA'
         )}

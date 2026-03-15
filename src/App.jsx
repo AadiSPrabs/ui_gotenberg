@@ -9,7 +9,7 @@ import History from './components/History';
 import SplitPdf from './components/SplitPdf';
 import ConvertToPdfA from './components/ConvertToPdfA';
 import EditMetadata from './components/EditMetadata';
-import FlattenPdf from './components/FlattenPdf';
+import PdfSecurity from './components/PdfSecurity';
 
 function App() {
   const [activeTab, setActiveTab] = useState('url2pdf');
@@ -77,6 +77,12 @@ function App() {
             Edit Metadata
           </button>
           <button 
+            className={`nav-item ${activeTab === 'security' ? 'active' : ''}`}
+            onClick={() => setActiveTab('security')}
+          >
+            PDF Security
+          </button>
+          <button 
             className={`nav-item ${activeTab === 'flatten' ? 'active' : ''}`}
             onClick={() => setActiveTab('flatten')}
           >
@@ -105,6 +111,7 @@ function App() {
               {activeTab === 'splitPdf' && 'Split PDF'}
               {activeTab === 'pdfA' && 'Convert to PDF/A'}
               {activeTab === 'metadata' && 'Edit Metadata'}
+              {activeTab === 'security' && 'PDF Security'}
               {activeTab === 'flatten' && 'Flatten PDF'}
               {activeTab === 'history' && 'History Log'}
             </h1>
@@ -117,6 +124,7 @@ function App() {
               {activeTab === 'splitPdf' && 'Extract specific page ranges or individual sheets from a source PDF.'}
               {activeTab === 'pdfA' && 'Enforce archival standards compliance for long-term document storage.'}
               {activeTab === 'metadata' && 'Inject and modify document metadata properties via JSON interface.'}
+              {activeTab === 'security' && 'Encrypt documents with user/owner passwords and restrict user permissions.'}
               {activeTab === 'flatten' && 'Convert interactive form fields and annotations into static document content.'}
               {activeTab === 'history' && 'Local operation log of recent processing activity.'}
             </p>
@@ -131,6 +139,7 @@ function App() {
             {activeTab === 'splitPdf' && <SplitPdf />}
             {activeTab === 'pdfA' && <ConvertToPdfA />}
             {activeTab === 'metadata' && <EditMetadata />}
+            {activeTab === 'security' && <PdfSecurity />}
             {activeTab === 'flatten' && <FlattenPdf />}
             {activeTab === 'history' && <History />}
           </div>
