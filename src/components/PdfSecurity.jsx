@@ -38,22 +38,23 @@ export default function PdfSecurity() {
     setError('');
     
     try {
-      const securityJson = {
-        encryption: {
-          userPassword: userPassword || undefined,
-          ownerPassword: ownerPassword || undefined,
-          ...permissions,
-          encryptionKeyLength: 256 // Default to high security
-        }
-      };
+      if (!userPassword) {
+        throw new Error('User Password is required for encryption.');
+      }
 
       const formData = new FormData();
       formData.append('files', file);
+      formData.append('userPassword', userPassword);
       
-      const metadataBlob = new Blob([JSON.stringify(securityJson)], { type: 'application/json' });
-      formData.append('files', metadataBlob, 'metadata.json');
+      if (ownerPassword) {
+        formData.append('ownerPassword', ownerPassword);
+      }
+      
+      // Note: Gotenberg 8 /encrypt endpoint focuses on passwords.
+      // Permissions are usually handled via PDF engine specific flags if needed,
+      // but the baseline /encrypt endpoint primarily takes passwords.
 
-      const response = await fetch('/api/forms/pdfengines/metadata', {
+      const response = await fetch('/api/forms/pdfengines/encrypt', {
         method: 'POST',
         body: formData,
       });

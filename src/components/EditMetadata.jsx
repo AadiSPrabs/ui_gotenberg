@@ -23,7 +23,7 @@ export default function EditMetadata() {
       const formData = new FormData();
       formData.append('files', file);
 
-      const response = await fetch('/api/forms/pdfengines/metadata', {
+      const response = await fetch('/api/forms/pdfengines/metadata/read', {
         method: 'POST',
         body: formData,
       });
@@ -34,6 +34,7 @@ export default function EditMetadata() {
 
       const data = await response.json();
       // Gotenberg v8 returns the metadata as a JSON object
+      // We stringify it for the textarea
       setMetadata(JSON.stringify(data, null, 2));
     } catch (err) {
       console.error('Inspection error:', err);
@@ -51,15 +52,16 @@ export default function EditMetadata() {
     setError('');
     
     try {
-      const metadataObj = JSON.parse(metadata);
+      // Validate JSON before sending
+      JSON.parse(metadata);
+      
       const formData = new FormData();
       formData.append('files', file);
       
-      // Gotenberg v8 expects a "metadata.json" file for updates
-      const metadataBlob = new Blob([JSON.stringify(metadataObj)], { type: 'application/json' });
-      formData.append('files', metadataBlob, 'metadata.json');
+      // Gotenberg v8 expects a "metadata" FORM FIELD for write operations
+      formData.append('metadata', metadata);
 
-      const response = await fetch('/api/forms/pdfengines/metadata', {
+      const response = await fetch('/api/forms/pdfengines/metadata/write', {
         method: 'POST',
         body: formData,
       });
