@@ -42,7 +42,8 @@ body {
   font-family: 'Outfit', system-ui, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-primary);
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   line-height: 1.5;
 }
@@ -62,12 +63,16 @@ h1, h2, h3, h4 {
 /* Structural Components */
 .app-container {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   border-top: 5px solid var(--accent-color);
 }
 
 .sidebar {
   width: clamp(240px, 20vw, 320px);
+  height: 100vh;
+  position: sticky;
+  top: 0;
   border-right: var(--border-width) var(--border-style) var(--border-color);
   background-color: var(--bg-color);
   display: flex;
