@@ -1,98 +1,89 @@
 import { useState, useRef } from 'react';
 import { appendHistory } from '../utils/HistoryUtils';
 
-export default function MergePdfs() {
-  const [files, setFiles] = useState([]);
+export default function EditMetadata() {
+  const [file, setFile] = useState(null);
+  const [metadata, setMetadata] = useState('{\n  "Author": "GTNBG Engine",\n  "Title": "Processed Document"\n}');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFiles(Array.from(e.target.files));
+      setFile(e.target.files[0]);
     }
   };
 
-  const handleConvert = async (e) => {
+  const handleUpdate = async (e) => {
     e.preventDefault();
-    if (files.length < 2) {
-      setError('Please select at least 2 PDFs to merge.');
-      return;
-    }
+    if (!file) return;
     
     setLoading(true);
     setError('');
     
     try {
+      const metadataObj = JSON.parse(metadata);
       const formData = new FormData();
-      // Gotenberg processes merge files in alphabetically sorted order based on the filename
-      // It uses the pdftk engines for this by default.
-      files.forEach((file) => {
-        formData.append('files', file);
-      });
+      formData.append('files', file);
+      formData.append('metadata', JSON.stringify(metadataObj));
 
-      const response = await fetch('/api/forms/pdfengines/merge', {
+      const response = await fetch('/api/forms/pdfengines/metadata', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`Merge failed: ${response.statusText}`);
+        throw new Error(`Metadata update failed: ${response.statusText}`);
       }
 
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = downloadUrl;
-      a.download = `merged_${files.length}_files_gtbg.pdf`;
+      
+      const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+      a.download = `${originalName}_meta_gtbg.pdf`;
+      
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
       a.remove();
 
-      // Log to history
       appendHistory({
         id: Date.now(),
-        filename: `${files.length} PDFs MERGED`,
-        type: 'PDF_MERGE',
+        filename: file.name,
+        type: 'METADATA_EDIT',
         timestamp: new Date().toISOString()
       });
     } catch (err) {
-      setError(err.message || 'An unexpected error occurred during merging.');
+      setError(err.message || 'An error occurred during metadata update. Ensure JSON is valid.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleConvert}>
-      
+    <form onSubmit={handleUpdate}>
       <div 
-        className={`file-dropzone ${files.length > 0 ? 'active' : ''}`}
+        className={`file-dropzone ${file ? 'active' : ''}`}
         onClick={() => fileInputRef.current?.click()}
       >
         <svg className="file-dropzone-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
-          <path d="M12 18v-6"></path>
-          <path d="M9 15h6"></path>
+          <path d="M12 18V12"></path>
+          <path d="M9 15l3 3 3-3"></path>
         </svg>
 
         <div>
           <h3 style={{ marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {files.length > 0 ? `${files.length} ASSETS MOUNTED` : 'MOUNT MULTIPLE PDFS'}
+            {file ? file.name : 'MOUNT PDF FOR METADATA'}
           </h3>
-          {files.length > 0 ? (
-            <div className="file-size-mono" style={{ marginTop: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', maxHeight: '100px', overflowY: 'auto' }}>
-              {files.map((file, idx) => (
-                <div key={idx} style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                  [{idx + 1}] {file.name} ({(file.size / 1024).toFixed(0)} KB)
-                </div>
-              ))}
-            </div>
+          {file ? (
+            <div className="file-size-mono">SIZE: {(file.size / 1024).toFixed(0)} KB</div>
           ) : (
             <p className="mono" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-              [ SELECT 2 OR MORE PDFS ] // FILES MERGED IN ALPHABETICAL ORDER
+              [ SELECT SOURCE PDF ]
             </p>
           )}
         </div>
@@ -100,15 +91,35 @@ export default function MergePdfs() {
         <input 
           type="file" 
           accept=".pdf" 
-          multiple
           ref={fileInputRef} 
           onChange={handleFileChange} 
           style={{ display: 'none' }} 
         />
       </div>
 
+      <div style={{ marginTop: '1.5rem' }}>
+        <label className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
+          METADATA_JSON_STRING
+        </label>
+        <textarea 
+          className="input-field mono" 
+          value={metadata}
+          onChange={(e) => setMetadata(e.target.value)}
+          rows="5"
+          style={{ 
+            width: '100%', 
+            padding: '1rem', 
+            backgroundColor: 'rgba(0,0,0,0.3)', 
+            border: '1px solid var(--border-color)', 
+            color: 'var(--accent-color)',
+            resize: 'vertical',
+            fontSize: '0.85rem'
+          }}
+        />
+      </div>
+
       {error && (
-        <div className="alert-box alert-error">
+        <div className="alert-box alert-error" style={{ marginTop: '1rem' }}>
           <strong style={{ display: 'block', marginBottom: '0.2rem' }}>ERR_FAIL:</strong> {error}
         </div>
       )}
@@ -116,12 +127,13 @@ export default function MergePdfs() {
       <button 
         type="submit" 
         className="btn-primary" 
-        disabled={loading || files.length < 2}
+        disabled={loading || !file}
+        style={{ marginTop: '1.5rem' }}
       >
         {loading ? (
-          <span className="loader-mono">PROCESSING...</span>
+          <span className="loader-mono">INJECTING...</span>
         ) : (
-          'FUSE PDFS'
+          'UPDATE METADATA'
         )}
       </button>
     </form>

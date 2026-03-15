@@ -1,27 +1,33 @@
 import { useState, useRef } from 'react';
+import { appendHistory } from '../utils/HistoryUtils';
 
 export default function OfficeToPdf() {
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
+      setFiles(Array.from(e.target.files));
     }
   };
 
   const handleConvert = async (e) => {
     e.preventDefault();
-    if (!file) return;
+    if (files.length === 0) return;
     
     setLoading(true);
     setError('');
     
     try {
       const formData = new FormData();
-      formData.append('files', file);
+      files.forEach(file => formData.append('files', file));
+
+      // Instruct Gotenberg to merge them if more than 1 file is passed
+      if (files.length > 1) {
+        formData.append('merge', 'true');
+      }
 
       const response = await fetch('/api/forms/libreoffice/convert', {
         method: 'POST',
@@ -36,12 +42,22 @@ export default function OfficeToPdf() {
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = downloadUrl;
-      const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-      a.download = `${originalName}_gtbg.pdf`;
+      
+      const originalName = files[0].name.substring(0, files[0].name.lastIndexOf('.')) || files[0].name;
+      a.download = files.length > 1 ? `merged_${files.length}_office_docs.pdf` : `${originalName}_gtbg.pdf`;
+      
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
       a.remove();
+
+      // Log to history
+      appendHistory({
+        id: Date.now(),
+        filename: files.length > 1 ? `${files.length} OFFICE DOCUMENTS` : files[0].name,
+        type: 'OFFICE_TO_PDF',
+        timestamp: new Date().toISOString()
+      });
     } catch (err) {
       setError(err.message || 'An error occurred. Check Gotenberg connection.');
     } finally {
@@ -53,7 +69,7 @@ export default function OfficeToPdf() {
     <form onSubmit={handleConvert}>
       
       <div 
-        className={`file-dropzone ${file ? 'active' : ''}`}
+        className={`file-dropzone ${files.length > 0 ? 'active' : ''}`}
         onClick={() => fileInputRef.current?.click()}
       >
         <svg className="file-dropzone-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
@@ -66,19 +82,26 @@ export default function OfficeToPdf() {
 
         <div>
           <h3 style={{ marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {file ? file.name : 'MOUNT OFFICE DOCUMENT'}
+            {files.length > 0 ? `${files.length} DOCUMENT(S) MOUNTED` : 'MOUNT OFFICE DOCUMENT(S)'}
           </h3>
-          {file ? (
-            <div className="file-size-mono">SIZE: {(file.size / 1024 / 1024).toFixed(2)} MB</div>
+          {files.length > 0 ? (
+            <div className="file-size-mono" style={{ marginTop: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', maxHeight: '100px', overflowY: 'auto' }}>
+              {files.map((file, idx) => (
+                <div key={idx} style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                  [{idx + 1}] {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                </div>
+              ))}
+            </div>
           ) : (
             <p className="mono" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-              [ DOCX / XLSX / PPTX / TXT ]
+              [ DOCX / XLSX / PPTX / TXT ] // SELECT MULTIPLE TO AUTO-MERGE
             </p>
           )}
         </div>
         
         <input 
           type="file" 
+          multiple
           accept=".docx,.doc,.xlsx,.xls,.pptx,.ppt,.rtf,.txt,.odt,.ods,.odp" 
           ref={fileInputRef} 
           onChange={handleFileChange} 
@@ -95,7 +118,7 @@ export default function OfficeToPdf() {
       <button 
         type="submit" 
         className="btn-primary" 
-        disabled={loading || !file}
+        disabled={loading || files.length === 0}
       >
         {loading ? (
           <span className="loader-mono">PROCESSING...</span>

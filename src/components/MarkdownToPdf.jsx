@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { appendHistory } from '../utils/HistoryUtils';
 
 export default function MarkdownToPdf() {
   const [file, setFile] = useState(null);
@@ -41,6 +42,14 @@ export default function MarkdownToPdf() {
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
       a.remove();
+
+      // Log to history
+      appendHistory({
+        id: Date.now(),
+        filename: file.name,
+        type: 'MARKDOWN_TO_PDF',
+        timestamp: new Date().toISOString()
+      });
     } catch (err) {
       setError(err.message || 'An unexpected error occurred during conversion.');
     } finally {

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { appendHistory } from '../utils/HistoryUtils';
 
 export default function UrlToPdf() {
   const [url, setUrl] = useState('');
@@ -46,6 +47,14 @@ export default function UrlToPdf() {
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
       a.remove();
+
+      // Log to history
+      appendHistory({
+        id: Date.now(),
+        filename: url.length > 30 ? url.substring(0, 30) + '...' : url,
+        type: 'URL_TO_PDF',
+        timestamp: new Date().toISOString()
+      });
     } catch (err) {
       setError(err.message || 'An unexpected error occurred during conversion.');
     } finally {

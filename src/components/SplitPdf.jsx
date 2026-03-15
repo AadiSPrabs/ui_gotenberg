@@ -1,98 +1,90 @@
 import { useState, useRef } from 'react';
 import { appendHistory } from '../utils/HistoryUtils';
 
-export default function MergePdfs() {
-  const [files, setFiles] = useState([]);
+export default function SplitPdf() {
+  const [file, setFile] = useState(null);
+  const [span, setSpan] = useState('1-1');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFiles(Array.from(e.target.files));
+      setFile(e.target.files[0]);
     }
   };
 
-  const handleConvert = async (e) => {
+  const handleSplit = async (e) => {
     e.preventDefault();
-    if (files.length < 2) {
-      setError('Please select at least 2 PDFs to merge.');
-      return;
-    }
+    if (!file) return;
     
     setLoading(true);
     setError('');
     
     try {
       const formData = new FormData();
-      // Gotenberg processes merge files in alphabetically sorted order based on the filename
-      // It uses the pdftk engines for this by default.
-      files.forEach((file) => {
-        formData.append('files', file);
-      });
+      formData.append('files', file);
+      formData.append('span', span);
 
-      const response = await fetch('/api/forms/pdfengines/merge', {
+      const response = await fetch('/api/forms/pdfengines/split', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`Merge failed: ${response.statusText}`);
+        throw new Error(`Split failed: ${response.statusText}`);
       }
 
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = downloadUrl;
-      a.download = `merged_${files.length}_files_gtbg.pdf`;
+      
+      const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+      // Gotenberg split returns a zip if multiple spans, but we only send one span here.
+      // So it returns a PDF.
+      a.download = `${originalName}_split_${span}.pdf`;
+      
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
       a.remove();
 
-      // Log to history
       appendHistory({
         id: Date.now(),
-        filename: `${files.length} PDFs MERGED`,
-        type: 'PDF_MERGE',
+        filename: `${file.name} (Pages ${span})`,
+        type: 'PDF_SPLIT',
         timestamp: new Date().toISOString()
       });
     } catch (err) {
-      setError(err.message || 'An unexpected error occurred during merging.');
+      setError(err.message || 'An error occurred during splitting.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleConvert}>
-      
+    <form onSubmit={handleSplit}>
       <div 
-        className={`file-dropzone ${files.length > 0 ? 'active' : ''}`}
+        className={`file-dropzone ${file ? 'active' : ''}`}
         onClick={() => fileInputRef.current?.click()}
       >
         <svg className="file-dropzone-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
-          <path d="M12 18v-6"></path>
-          <path d="M9 15h6"></path>
+          <line x1="12" y1="18" x2="12" y2="12"></line>
+          <line x1="9" y1="15" x2="15" y2="15"></line>
         </svg>
 
         <div>
           <h3 style={{ marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {files.length > 0 ? `${files.length} ASSETS MOUNTED` : 'MOUNT MULTIPLE PDFS'}
+            {file ? file.name : 'MOUNT PDF FOR SPLIT'}
           </h3>
-          {files.length > 0 ? (
-            <div className="file-size-mono" style={{ marginTop: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', maxHeight: '100px', overflowY: 'auto' }}>
-              {files.map((file, idx) => (
-                <div key={idx} style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                  [{idx + 1}] {file.name} ({(file.size / 1024).toFixed(0)} KB)
-                </div>
-              ))}
-            </div>
+          {file ? (
+            <div className="file-size-mono">SIZE: {(file.size / 1024).toFixed(0)} KB</div>
           ) : (
             <p className="mono" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-              [ SELECT 2 OR MORE PDFS ] // FILES MERGED IN ALPHABETICAL ORDER
+              [ SELECT SOURCE PDF ]
             </p>
           )}
         </div>
@@ -100,15 +92,28 @@ export default function MergePdfs() {
         <input 
           type="file" 
           accept=".pdf" 
-          multiple
           ref={fileInputRef} 
           onChange={handleFileChange} 
           style={{ display: 'none' }} 
         />
       </div>
 
+      <div style={{ marginTop: '1.5rem' }}>
+        <label className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
+          PAGE_SPAN (e.g., "1-3", "1,3,5", "1-5,7-10")
+        </label>
+        <input 
+          type="text" 
+          className="input-field mono" 
+          value={span}
+          onChange={(e) => setSpan(e.target.value)}
+          placeholder="ENTER RANGE"
+          style={{ width: '100%', padding: '0.8rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white' }}
+        />
+      </div>
+
       {error && (
-        <div className="alert-box alert-error">
+        <div className="alert-box alert-error" style={{ marginTop: '1rem' }}>
           <strong style={{ display: 'block', marginBottom: '0.2rem' }}>ERR_FAIL:</strong> {error}
         </div>
       )}
@@ -116,12 +121,13 @@ export default function MergePdfs() {
       <button 
         type="submit" 
         className="btn-primary" 
-        disabled={loading || files.length < 2}
+        disabled={loading || !file}
+        style={{ marginTop: '1.5rem' }}
       >
         {loading ? (
-          <span className="loader-mono">PROCESSING...</span>
+          <span className="loader-mono">EXTRACTING...</span>
         ) : (
-          'FUSE PDFS'
+          'EXTRACT PAGES'
         )}
       </button>
     </form>
