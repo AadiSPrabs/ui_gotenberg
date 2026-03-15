@@ -27,11 +27,11 @@ export default function HtmlToPdf() {
       // If uploading multiple files (like an index.html + style.css + image.png), 
       // one of them MUST be index.html. If it's a single file, it's renamed to index.html in the UI request for robustness, though we just append it normally here.
       files.forEach((file) => {
-        // If it's a single file, Gotenberg prefers it to be called index.html
-        if (files.length === 1) {
-            formData.append('files', file, 'index.html');
+        // Gotenberg strictly requires "index.html" as the entry point
+        if (files.length === 1 && file.name !== 'index.html') {
+          formData.append('files', file, 'index.html');
         } else {
-            formData.append('files', file);
+          formData.append('files', file);
         }
       });
 

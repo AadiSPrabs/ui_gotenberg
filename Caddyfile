@@ -2,7 +2,7 @@
     # 1. API route (Must be matched first)
     handle /api/* {
         uri strip_prefix /api
-        reverse_proxy localhost:3000 {
+        reverse_proxy {$GOTENBERG_URL} {
             header_up Host {host}
             header_up X-Real-IP {remote}
             header_up X-Forwarded-For {remote}
@@ -14,7 +14,7 @@
 
     # 2. Static UI Files
     handle {
-        root * /srv
+        root * /usr/share/caddy
         encode gzip
         try_files {path} /index.html
         file_server

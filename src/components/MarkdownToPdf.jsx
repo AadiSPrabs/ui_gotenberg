@@ -22,6 +22,22 @@ export default function MarkdownToPdf() {
     
     try {
       const formData = new FormData();
+      
+      // Gotenberg v8 Markdown conversion requires an index.html template and the .md file
+      const indexHtmlContent = `
+        <!doctype html>
+        <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>Markdown Conversion</title>
+          </head>
+          <body>
+            {{ toHTML "index.md" }}
+          </body>
+        </html>
+      `;
+      const indexHtmlBlob = new Blob([indexHtmlContent], { type: 'text/html' });
+      formData.append('files', indexHtmlBlob, 'index.html');
       formData.append('files', file, 'index.md');
 
       const response = await fetch('/api/forms/chromium/convert/markdown', {

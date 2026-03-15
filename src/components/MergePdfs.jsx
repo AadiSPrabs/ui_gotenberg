@@ -9,8 +9,37 @@ export default function MergePdfs() {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFiles(Array.from(e.target.files));
+      setFiles(prev => [...prev, ...Array.from(e.target.files)]);
     }
+  };
+
+  const removeFile = (index) => {
+    setFiles(files.filter((_, i) => i !== index));
+    if (files.length <= 1) setError('');
+  };
+
+  const clearAll = () => {
+    setFiles([]);
+    setError('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const moveUp = (index) => {
+    if (index === 0) return;
+    const newFiles = [...files];
+    const item = newFiles[index];
+    newFiles[index] = newFiles[index - 1];
+    newFiles[index - 1] = item;
+    setFiles(newFiles);
+  };
+
+  const moveDown = (index) => {
+    if (index === files.length - 1) return;
+    const newFiles = [...files];
+    const item = newFiles[index];
+    newFiles[index] = newFiles[index + 1];
+    newFiles[index + 1] = item;
+    setFiles(newFiles);
   };
 
   const handleConvert = async (e) => {
@@ -25,10 +54,13 @@ export default function MergePdfs() {
     
     try {
       const formData = new FormData();
-      // Gotenberg processes merge files in alphabetically sorted order based on the filename
-      // It uses the pdftk engines for this by default.
-      files.forEach((file) => {
-        formData.append('files', file);
+      
+      // Prefix files numerically (e.g., 0001_name.pdf) to enforce user ordering
+      // Since Gotenberg merges files in alphabetical order by filename.
+      files.forEach((file, index) => {
+        const prefix = (index + 1).toString().padStart(4, '0');
+        const prefixedName = `${prefix}_${file.name}`;
+        formData.append('files', file, prefixedName);
       });
 
       const response = await fetch('/api/forms/pdfengines/merge', {
@@ -50,7 +82,6 @@ export default function MergePdfs() {
       window.URL.revokeObjectURL(downloadUrl);
       a.remove();
 
-      // Log to history
       appendHistory({
         id: Date.now(),
         filename: `${files.length} PDFs MERGED`,
@@ -66,7 +97,6 @@ export default function MergePdfs() {
 
   return (
     <form onSubmit={handleConvert}>
-      
       <div 
         className={`file-dropzone ${files.length > 0 ? 'active' : ''}`}
         onClick={() => fileInputRef.current?.click()}
@@ -82,17 +112,9 @@ export default function MergePdfs() {
           <h3 style={{ marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {files.length > 0 ? `${files.length} ASSETS MOUNTED` : 'MOUNT MULTIPLE PDFS'}
           </h3>
-          {files.length > 0 ? (
-            <div className="file-size-mono" style={{ marginTop: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', maxHeight: '100px', overflowY: 'auto' }}>
-              {files.map((file, idx) => (
-                <div key={idx} style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                  [{idx + 1}] {file.name} ({(file.size / 1024).toFixed(0)} KB)
-                </div>
-              ))}
-            </div>
-          ) : (
+          {files.length === 0 && (
             <p className="mono" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-              [ SELECT 2 OR MORE PDFS ] // FILES MERGED IN ALPHABETICAL ORDER
+              [ SELECT 2 OR MORE PDFS ] // CUSTOM ORDER SUPPORTED
             </p>
           )}
         </div>
@@ -106,6 +128,34 @@ export default function MergePdfs() {
           style={{ display: 'none' }} 
         />
       </div>
+
+      {files.length > 0 && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+             <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>FILE_QUEUE — ({files.length} ITEMS)</span>
+             <button type="button" onClick={clearAll} className="mono" style={{ background: 'none', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', fontSize: '0.7rem' }}>[ CLEAR_ALL ]</button>
+          </div>
+          <div style={{ border: '1px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+            {files.map((file, idx) => (
+              <div key={idx} style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                padding: '0.8rem', 
+                gap: '1rem',
+                borderBottom: idx === files.length - 1 ? 'none' : '1px solid var(--border-color)'
+              }}>
+                <span className="mono" style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{idx + 1}.</span>
+                <span className="mono" style={{ flex: 1, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button type="button" onClick={() => moveUp(idx)} disabled={idx === 0} style={{ background: 'none', border: '1px solid var(--border-color)', color: 'white', cursor: 'pointer', padding: '0.2rem 0.5rem' }}>↑</button>
+                  <button type="button" onClick={() => moveDown(idx)} disabled={idx === files.length - 1} style={{ background: 'none', border: '1px solid var(--border-color)', color: 'white', cursor: 'pointer', padding: '0.2rem 0.5rem' }}>↓</button>
+                  <button type="button" onClick={() => removeFile(idx)} style={{ background: 'none', border: '1px solid var(--border-color)', color: 'var(--accent-color)', cursor: 'pointer', padding: '0.2rem 0.5rem' }}>X</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="alert-box alert-error">

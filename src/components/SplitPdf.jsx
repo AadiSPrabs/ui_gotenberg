@@ -24,7 +24,8 @@ export default function SplitPdf() {
     try {
       const formData = new FormData();
       formData.append('files', file);
-      formData.append('spans', span); // API parameter is 'spans'
+      formData.append('splitMode', 'pages');
+      formData.append('splitSpan', span);
 
       const response = await fetch('/api/forms/pdfengines/split', {
         method: 'POST',
@@ -106,7 +107,7 @@ export default function SplitPdf() {
 
       <div style={{ marginTop: '1.5rem' }}>
         <label className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
-          PAGE_SPAN (e.g., "1-3", "1,3,5", "1-5,7-10")
+          SPLIT_SPAN (e.g., "1-3", "1,3,5", "1-5,7-10")
         </label>
         <input 
           type="text" 
