@@ -16,12 +16,15 @@ This project uses an **"All-in-One" Docker Image** approach. It bundles the offi
 
 To get this running on your target server machine (Linux/Windows/macOS) with Docker installed, follow these exact steps:
 
-### 1. Clone the Codebase
-SSH into your server and run:
+### 1. Download the Codebase
+SSH into your server and download the latest zip archive:
 ```bash
-git clone https://github.com/AadiSPrabs/ui_gotenberg.git
-cd ui_gotenberg
+# Using wget
+wget https://github.com/AadiSPrabs/ui_gotenberg/archive/refs/heads/main.zip
+unzip main.zip
+cd ui_gotenberg-main
 ```
+*(If you don't have `wget`, you can use `curl -L -O https://github.com/AadiSPrabs/ui_gotenberg/archive/refs/heads/main.zip`)*
 
 ### 2. Build the All-in-One Docker Image
 Because this image compiles the React frontend inside a builder stage and then packages it with Gotenberg, building it takes a few moments. Run:
