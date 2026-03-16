@@ -58,7 +58,7 @@ Then, run:
 docker compose up -d
 ```
 
-Access the UI at `http://localhost:8080`.
+Access the UI at `http://<your-server-ip>:8080`.
 
 ---
 
